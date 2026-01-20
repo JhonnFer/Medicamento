@@ -1,8 +1,9 @@
 package com.epn.medicamento.ui
 
+import android.app.TimePickerDialog
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items // IMPORT CRÍTICO QUE FALTABA
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
@@ -11,16 +12,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.epn.medicamento.data.local.MedicineEntity
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MedicineScreen(viewModel: MedicineViewModel) {
+
     val nombre by viewModel.nombre.collectAsState()
     val dosis by viewModel.dosis.collectAsState()
     val medicinas by viewModel.medicinas.collectAsState(initial = emptyList())
     val context = LocalContext.current
 
-    // Estados para la hora y minuto (puedes cambiarlos con un TimePicker luego)
+    // Hora seleccionada por el usuario
     var hora by remember { mutableIntStateOf(8) }
     var minuto by remember { mutableIntStateOf(0) }
 
@@ -35,13 +39,14 @@ fun MedicineScreen(viewModel: MedicineViewModel) {
             )
         }
     ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .padding(paddingValues)
                 .padding(16.dp)
                 .fillMaxSize()
         ) {
-            // Formulario de entrada
+
             OutlinedTextField(
                 value = nombre,
                 onValueChange = { viewModel.onNombreChange(it) },
@@ -60,14 +65,39 @@ fun MedicineScreen(viewModel: MedicineViewModel) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // BOTÓN PARA SELECCIONAR LA HORA
+            Button(
+                onClick = {
+                    val calendar = Calendar.getInstance()
+
+                    TimePickerDialog(
+                        context,
+                        { _, h, m ->
+                            hora = h
+                            minuto = m
+                        },
+                        hora,
+                        minuto,
+                        true
+                    ).show()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val h = hora.toString().padStart(2, '0')
+                val m = minuto.toString().padStart(2, '0')
+                Text("Seleccionar hora: $h:$m")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // BOTÓN PARA GUARDAR Y PROGRAMAR
             Button(
                 onClick = { viewModel.guardarMedicina(context, hora, minuto) },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Usamos una forma más sencilla de formatear la hora para evitar errores
-                val horaFormateada = hora.toString().padStart(2, '0')
-                val minutoFormateado = minuto.toString().padStart(2, '0')
-                Text("Programar para las $horaFormateada:$minutoFormateado")
+                val h = hora.toString().padStart(2, '0')
+                val m = minuto.toString().padStart(2, '0')
+                Text("Programar para las $h:$m")
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -78,13 +108,15 @@ fun MedicineScreen(viewModel: MedicineViewModel) {
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            // Lista de medicamentos con el error de 'items' corregido
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
                 items(medicinas) { med ->
-                    MedicineItem(med = med, onDelete = { viewModel.eliminar(med) })
+                    MedicineItem(
+                        med = med,
+                        onDelete = { viewModel.eliminar(med) }
+                    )
                 }
             }
         }
@@ -92,7 +124,10 @@ fun MedicineScreen(viewModel: MedicineViewModel) {
 }
 
 @Composable
-fun MedicineItem(med: com.epn.medicamento.data.local.MedicineEntity, onDelete: () -> Unit) {
+fun MedicineItem(
+    med: MedicineEntity,
+    onDelete: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -105,6 +140,7 @@ fun MedicineItem(med: com.epn.medicamento.data.local.MedicineEntity, onDelete: (
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = med.nombre,
@@ -114,14 +150,17 @@ fun MedicineItem(med: com.epn.medicamento.data.local.MedicineEntity, onDelete: (
                     text = "Dosis: ${med.dosis}",
                     style = MaterialTheme.typography.bodyMedium
                 )
+
                 val h = med.hora.toString().padStart(2, '0')
                 val m = med.minuto.toString().padStart(2, '0')
+
                 Text(
                     text = "Hora: $h:$m",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
+
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Delete,

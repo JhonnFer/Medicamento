@@ -20,7 +20,7 @@ class MedicineReceiver : BroadcastReceiver() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(channelId, "Recordatorios de Medicina", NotificationManager.IMPORTANCE_HIGH).apply {
                 enableVibration(true)
-                vibrationPattern = longArrayOf(0, 500, 200, 500)
+                vibrationPattern = longArrayOf(0, 1000, 500, 1000, 500, 1000)
                 setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), null)
             }
             notificationManager.createNotificationChannel(channel)
